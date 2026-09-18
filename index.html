@@ -34,7 +34,6 @@
       background: #000;
     }
 
-    /* Large clickable play overlay */
     #playOverlay {
       position: absolute;
       top: 0;
@@ -44,7 +43,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(0, 0, 0, 0.4);
       cursor: pointer;
       z-index: 20;
     }
@@ -74,7 +72,8 @@
 <body>
 
   <div class="container">
-    <video id="myVideo" playsinline preload="auto" controls>
+    <!-- poster attribute tells the browser what image to show before playback starts -->
+    <video id="myVideo" playsinline preload="auto" poster="cover.jpg" controls>
       <source src="L%26C%20Mid%20Autumn(1-Compr).mp4?v=2" type="video/mp4">
       <source src="L&C Mid Autumn(1-Compr).mp4?v=2" type="video/mp4">
     </video>
@@ -101,21 +100,18 @@
       if (playPromise !== undefined) {
         playPromise.then(() => {
           overlay.style.display = 'none';
-        }).catch((err) => {
-          // If iOS blocks unmuted sound on first touch, play muted first then unmute
+        }).catch(() => {
           video.muted = true;
           video.play().then(() => {
             video.muted = false;
             overlay.style.display = 'none';
           }).catch(() => {
-            // If still blocked, remove overlay so native video controls take over directly
             overlay.style.display = 'none';
           });
         });
       }
     }
 
-    // Bind both touch and click to prevent mobile browser tap drops
     overlay.addEventListener('touchstart', startPlayback, { passive: false });
     overlay.addEventListener('click', startPlayback);
 

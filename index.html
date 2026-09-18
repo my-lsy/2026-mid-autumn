@@ -3,111 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#000000">
   <title>Mid Autumn</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%;
       height: 100%;
-      height: 100dvh; /* Adapts cleanly to mobile URL bars */
+      height: 100dvh;
       background: #000;
       overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: center;
-      touch-action: manipulation;
-      user-select: none;
-      -webkit-user-select: none;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    .player-container {
+    .container {
       position: relative;
       width: 100vw;
       height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
-      cursor: pointer;
     }
 
     video {
       width: 100%;
       height: 100%;
       object-fit: contain;
-      display: block;
+      background: #000;
     }
 
-    /* Minimalist central play badge */
-    .play-trigger {
+    /* Large clickable play overlay */
+    #playOverlay {
       position: absolute;
-      width: 72px;
-      height: 72px;
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      z-index: 20;
+    }
+
+    .play-circle {
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.4);
       border-radius: 50%;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-      transition: transform 0.2s ease, opacity 0.2s ease;
-      pointer-events: none;
-      z-index: 10;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
     }
 
-    .play-trigger svg {
-      width: 28px;
-      height: 28px;
-      fill: #ffffff;
-      margin-left: 4px; /* Optically centers the play triangle */
-    }
-
-    .play-trigger.hidden {
-      opacity: 0;
-      transform: scale(0.8);
-      visibility: hidden;
+    .play-circle svg {
+      width: 32px;
+      height: 32px;
+      fill: #fff;
+      margin-left: 4px;
     }
   </style>
 </head>
 <body>
 
-  <div class="player-container" id="tapArea">
-    <video id="mainVideo" playsinline preload="auto">
-      <source src="L%26C%20Mid%20Autumn(1-Compr).mp4?v=1" type="video/mp4">
-      <source src="L&C Mid Autumn(1-Compr).mp4?v=1" type="video/mp4">
+  <div class="container">
+    <video id="myVideo" playsinline preload="auto" controls>
+      <source src="L%26C%20Mid%20Autumn(1-Compr).mp4?v=2" type="video/mp4">
+      <source src="L&C Mid Autumn(1-Compr).mp4?v=2" type="video/mp4">
     </video>
 
-    <!-- Sleek tap-to-play icon -->
-    <div class="play-trigger" id="playIcon">
-      <svg viewBox="0 0 24 24">
-        <path d="M8 5v14l11-7z"/>
-      </svg>
+    <div id="playOverlay">
+      <div class="play-circle">
+        <svg viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
     </div>
   </div>
 
   <script>
-    const container = document.getElementById('tapArea');
-    const video = document.getElementById('mainVideo');
-    const playIcon = document.getElementById('playIcon');
+    const video = document.getElementById('myVideo');
+    const overlay = document.getElementById('playOverlay');
 
-    // Tap anywhere to toggle play/pause with full audio
-    container.addEventListener('click', () => {
-      if (video.paused) {
-        video.play().then(() => {
-          playIcon.classList.add('hidden');
-        }).catch(() => {});
-      } else {
-        video.pause();
-        playIcon.classList.remove('hidden');
+    function startPlayback(e) {
+      if (e) e.preventDefault();
+      
+      video.muted = false;
+      const playPromise = video.play();
+
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          overlay.style.display = 'none';
+        }).catch((err) => {
+          // If iOS blocks unmuted sound on first touch, play muted first then unmute
+          video.muted = true;
+          video.play().then(() => {
+            video.muted = false;
+            overlay.style.display = 'none';
+          }).catch(() => {
+            // If still blocked, remove overlay so native video controls take over directly
+            overlay.style.display = 'none';
+          });
+        });
       }
-    });
+    }
 
-    // Re-show play badge if the video finishes
+    // Bind both touch and click to prevent mobile browser tap drops
+    overlay.addEventListener('touchstart', startPlayback, { passive: false });
+    overlay.addEventListener('click', startPlayback);
+
     video.addEventListener('ended', () => {
-      playIcon.classList.remove('hidden');
+      overlay.style.display = 'flex';
     });
   </script>
 </body>
